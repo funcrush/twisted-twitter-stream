@@ -145,17 +145,17 @@ class _TwitterStreamFactory(protocol.ReconnectingClientFactory):
 def firehose(username, password, consumer):
     tw = _TwitterStreamFactory(consumer)
     tw.make_header(username, password, "GET", "/1/statuses/firehose.json")
-    reactor.connectTCP("stream.twitter.com", 80, tw)
+    reactor.connectSSL("stream.twitter.com", 443, tw, ssl.ClientContextFactory())
 
 def retweet(username, password, consumer):
     tw = _TwitterStreamFactory(consumer)
     tw.make_header(username, password, "GET", "/1/statuses/retweet.json")
-    reactor.connectTCP("stream.twitter.com", 80, tw)
+    reactor.connectSSL("stream.twitter.com", 443, tw, ssl.ClientContextFactory())
 
 def sample(username, password, consumer):
     tw = _TwitterStreamFactory(consumer)
     tw.make_header(username, password, "GET", "/1/statuses/sample.json")
-    reactor.connectTCP("stream.twitter.com", 80, tw)
+    reactor.connectSSL("stream.twitter.com", 443, tw, ssl.ClientContextFactory())
 
 def filter(username, password, consumer, count=0, delimited=0, track=[], follow=[], locations=[]):
     qs = []
