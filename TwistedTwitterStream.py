@@ -157,7 +157,7 @@ def sample(username, password, consumer):
     tw.make_header(username, password, "GET", "/1/statuses/sample.json")
     reactor.connectTCP("stream.twitter.com", 80, tw)
 
-def filter(username, password, consumer, count=0, delimited=0, track=[], follow=[]):
+def filter(username, password, consumer, count=0, delimited=0, track=[], follow=[], locations=[]):
     qs = []
     if count:
         qs.append("count=%s" % urllib.quote(count))
@@ -167,9 +167,11 @@ def filter(username, password, consumer, count=0, delimited=0, track=[], follow=
         qs.append("follow=%s" % ",".join(follow))
     if track:
         qs.append("track=%s" % ",".join([urllib.quote(s) for s in track]))
+    if locations:
+       qs.append("locations=%s" % ",".join(map(lambda x:str(x), locations)))
 
-    if not (track or follow):
-        raise RuntimeError("At least one parameter is required: track or follow")
+    if not (track or follow or locations):
+        raise RuntimeError("At least one parameter is required: track or follow or locations")
 
     tw = _TwitterStreamFactory(consumer)
     tw.make_header(username, password, "POST", "/1/statuses/filter.json", "&".join(qs))
