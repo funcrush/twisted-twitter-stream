@@ -20,7 +20,7 @@ __version__ = "0.0.2"
 """Twisted client library for the Twitter Streaming API:
 http://apiwiki.twitter.com/Streaming-API-Documentation"""
 
-import base64, urllib
+import base64, urllib, zlib
 from twisted.protocols import basic
 from twisted.internet import defer, reactor, protocol, ssl
 
@@ -32,6 +32,9 @@ except ImportError:
     except ImportError:
         raise RuntimeError("A JSON parser is required, e.g., simplejson at "
                            "http://pypi.python.org/pypi/simplejson/")
+
+decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
+
 
 
 class TweetReceiver(object):
@@ -100,12 +103,11 @@ class _TwitterStreamProtocol(basic.LineReceiver):
 
         self.status_data += data
         if self.status_size == 0:
-            try:
-                # ignore newline keep-alive
-                tweet = _json.loads(self.status_data)
-            except:
-                pass
-            else:
+            # Ignore newline for keep-alive
+            # TODO Is it ok not to handle any exception?
+            raw_data = decompressor.decompress(self.status_data)
+            if raw_data != "\r\n":
+                tweet = _json.loads(raw_data)
                 self.factory.consumer.tweetReceived(tweet)
             self.status_data = ""
             self.status_size = None
@@ -129,6 +131,7 @@ class _TwitterStreamFactory(protocol.ReconnectingClientFactory):
             "Authorization: Basic %s" % auth,
             "User-Agent: twisted twitter radio",
             "Host: stream.twitter.com",
+            "Accept-Encoding: deflate, gzip",
         ]
 
         if method == "GET":
